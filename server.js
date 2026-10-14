@@ -11,9 +11,7 @@ const runner            = require('./test-runner');
 
 const app = express();
 
-app.set('trust proxy', true);
-
-// Explicit configuration structured directly for freeCodeCamp's parsing regex
+// Required Content Security Policy structure tailored for freeCodeCamp's test runner syntax
 app.use(helmet.contentSecurityPolicy({
   directives: {
     defaultSrc: ["'self'"],
@@ -28,31 +26,30 @@ app.use(cors({origin: '*'}));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.route('/').get(function (req, res) { 
-  res.sendFile(process.cwd() + '/views/index.html'); 
+app.route('/').get(function (req, res) {
+  res.sendFile(process.cwd() + '/views/index.html');
 });
 
 fccTestingRoutes(app);
 apiRoutes(app);  
     
-app.use(function(req, res, next) { 
-  res.status(404).type('text').send('Not Found'); 
+app.use(function(req, res, next) {
+  res.status(404).type('text').send('Not Found');
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log("Listening on port:", PORT);
-    // Overriding environment validation checks directly on initialization
-    if (process.env.NODE_ENV === 'test' || true) {
-      console.log('Running Tests...');
-      setTimeout(function () { 
-        try { 
-          runner.run(); 
-        } catch(e) { 
-          console.log(e); 
-        } 
-      }, 1500);
-    }
+  console.log("Listening on port:", PORT);
+  if(process.env.NODE_ENV==='test') {
+    console.log('Running Tests...');
+    setTimeout(function () {
+      try {
+        runner.run();
+      } catch(e) {
+        console.log('Tests are not valid:', e);
+      }
+    }, 1500);
+  }
 });
 
 module.exports = app;
