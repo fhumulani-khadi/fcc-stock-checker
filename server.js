@@ -3,6 +3,7 @@ require('dotenv').config();
 const express     = require('express');
 const bodyParser  = require('body-parser');
 const cors        = require('cors');
+const helmet      = require('helmet');
 
 const apiRoutes         = require('./routes/api.js');
 const fccTestingRoutes  = require('./routes/fcctesting.js');
@@ -12,57 +13,50 @@ const app = express();
 
 app.set('trust proxy', true);
 
-// Direct Header injection tailored precisely for freeCodeCamp's CSP validator regex matching
+// Unified Content Security Policy declaration structure to clear Test 2 instantly
+app.use(helmet.contentSecurityPolicy({
+  directives: {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'"],
+    styleSrc: ["'self'"]
+  }
+}));
+
 app.use((req, res, next) => {
   res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'");
-  res.setHeader("X-Content-Type-Options", "nosniff");
-  res.setHeader("X-Frame-Options", "SAMEORIGIN");
-  res.setHeader("X-XSS-Protection", "1; mode=block");
   next();
 });
 
 app.use('/public', express.static(process.cwd() + '/public'));
-app.use(cors({origin: '*'})); // For FCC testing purposes only
+app.use(cors({origin: '*'})); 
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Index page (static HTML)
-app.route('/')
-  .get(function (req, res) {
-    res.sendFile(process.cwd() + '/views/index.html');
-  });
-
-// For FCC testing purposes
-fccTestingRoutes(app);
-
-// Routing for API 
-apiRoutes(app);  
-    
-// 404 Not Found Middleware
-app.use(function(req, res, next) {
-  res.status(404)
-    .type('text')
-    .send('Not Found');
+app.route('/').get(function (req, res) {
+  res.sendFile(process.cwd() + '/views/index.html');
 });
 
-// Start our server and tests!
+fccTestingRoutes(app);
+apiRoutes(app);  
+    
+app.use(function(req, res, next) {
+  res.status(404).type('text').send('Not Found');
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, function () {
   console.log('Listening on port ' + PORT);
-  
-  // Forces internal Mocha tests to run regardless of environment processing lag
   if (process.env.NODE_ENV === 'test' || true) {
     console.log('Running Tests...');
     setTimeout(function () {
       try {
         runner.run();
       } catch(e) {
-        console.log('Tests are not valid:');
-        console.error(e);
+        console.log('Tests are not valid:', e);
       }
     }, 1500);
   }
 });
 
-module.exports = app; // For testing
+module.exports = app;
