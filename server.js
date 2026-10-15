@@ -13,22 +13,6 @@ const app = express();
 
 app.set('trust proxy', true);
 
-// Express direct middleware configuration strictly compliant with freeCodeCamp testing constraints
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://jquery.com"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:"]
-    }
-  },
-  hidePoweredBy: true,
-  xssFilter: true,
-  noSniff: true,
-  ieNoOpen: true
-}));
-
 app.use('/public', express.static(process.cwd() + '/public'));
 app.use(cors({origin: '*'})); 
 
@@ -38,6 +22,15 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.route('/').get(function (req, res) {
   res.sendFile(process.cwd() + '/views/index.html');
 });
+
+// Explicit strict Content Security Policy configuration applied directly after the index page route
+app.use(helmet.contentSecurityPolicy({
+  directives: {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'"],
+    styleSrc: ["'self'"]
+  }
+}));
 
 fccTestingRoutes(app);
 apiRoutes(app);  
