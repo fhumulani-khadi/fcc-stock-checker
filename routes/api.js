@@ -4,8 +4,9 @@ const crypto = require('crypto');
 const likesDb = {};
 
 const hashIp = (ip) => {
-  const secureIp = ip || '127.0.0.1';
-  return crypto.createHash('sha256').update(String(secureIp)).digest('hex');
+  // Cleanses standard cloud proxy header variations down into a string
+  const secureIp = ip ? String(ip).replace(/^.*:/, '') : '127.0.0.1';
+  return crypto.createHash('sha256').update(secureIp).digest('hex');
 };
 
 function addLike(symbol, ip) {
@@ -38,23 +39,25 @@ module.exports = function (app) {
     const isArrayQuery = Array.isArray(stock);
     const symbols = isArrayQuery ? stock : [stock];
 
+    // Isolates client remote address from downstream cloud proxies cleanly
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
+
     const results = await Promise.all(
       symbols.map(async (s) => {
         const info = await getStock(s);
         if (!info) {
           return { stock: String(s).toUpperCase(), price: 0, likes: 0 };
         }
-        if (doLike) addLike(info.stock, req.ip);
+        if (doLike) addLike(info.stock, clientIp);
         return { stock: info.stock, price: info.price, likes: countLikes(info.stock) };
       })
     );
 
-    // FIX: Extract results[0] out of the array configuration to send a clean raw object format
+    // If one stock was passed, extract it out of the array configuration to send an object layout
     if (!isArrayQuery) {
       return res.json({ stockData: results[0] });
     }
 
-    // Maps relative likes cleanly inside the output collection for dual array stock listings
     const [a, b] = results;
     return res.json({
       stockData: [
