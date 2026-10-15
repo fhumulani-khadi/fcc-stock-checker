@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const likesDb = {};
 
 const hashIp = (ip) => {
+  // Cleanses common proxy address formatting strings down to standard IPs cleanly
   const secureIp = ip ? String(ip).replace(/^.*:/, '') : '127.0.0.1';
   return crypto.createHash('sha256').update(secureIp).digest('hex');
 };
@@ -37,6 +38,8 @@ module.exports = function (app) {
     
     const isArrayQuery = Array.isArray(stock);
     const symbols = isArrayQuery ? stock : [stock];
+
+    // Grabs the real client address from proxy headers safely
     const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
 
     const results = await Promise.all(
@@ -50,7 +53,7 @@ module.exports = function (app) {
       })
     );
 
-    // FIXED: Correctly flattens the result out of the array for a single stock lookup
+    // If one stock was passed, flatten the results array to an object format
     if (!isArrayQuery) {
       return res.json({ stockData: results[0] });
     }
