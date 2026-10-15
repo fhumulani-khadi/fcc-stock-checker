@@ -1,7 +1,6 @@
 'use strict';
 const crypto = require('crypto');
 
-// Global persistent simulation maps for tracking data records seamlessly
 const likesDb = {};
 
 const hashIp = (ip) => {
@@ -36,7 +35,6 @@ module.exports = function (app) {
     
     if (!stock) return res.json({ error: 'no stock provided' });
     
-    // Core structural array conditional mapping
     const isArrayQuery = Array.isArray(stock);
     const symbols = isArrayQuery ? stock : [stock];
 
@@ -51,12 +49,12 @@ module.exports = function (app) {
       })
     );
 
-    // If one single stock was queried, return an single object containing stockData
+    // FIX: Returns a flat single object if only one stock was passed
     if (!isArrayQuery) {
       return res.json({ stockData: results[0] });
     }
 
-    // If multiple stocks were provided, map data points using strict rel_likes arrays
+    // Returns an array containing objects with rel_likes if two stocks were passed
     const [a, b] = results;
     return res.json({
       stockData: [
