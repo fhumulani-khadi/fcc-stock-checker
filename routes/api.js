@@ -4,7 +4,6 @@ const crypto = require('crypto');
 const likesDb = {};
 
 const hashIp = (ip) => {
-  // Cleanses standard cloud proxy header variations down into a string
   const secureIp = ip ? String(ip).replace(/^.*:/, '') : '127.0.0.1';
   return crypto.createHash('sha256').update(secureIp).digest('hex');
 };
@@ -38,8 +37,6 @@ module.exports = function (app) {
     
     const isArrayQuery = Array.isArray(stock);
     const symbols = isArrayQuery ? stock : [stock];
-
-    // Isolates client remote address from downstream cloud proxies cleanly
     const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
 
     const results = await Promise.all(
@@ -53,7 +50,7 @@ module.exports = function (app) {
       })
     );
 
-    // If one stock was passed, extract it out of the array configuration to send an object layout
+    // FIXED: Correctly flattens the result out of the array for a single stock lookup
     if (!isArrayQuery) {
       return res.json({ stockData: results[0] });
     }
