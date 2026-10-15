@@ -18,7 +18,8 @@ const countLikes = (symbol) => likesDb[symbol.toUpperCase()]?.size || 0;
 
 async function getStock(symbol) {
   try {
-    let cleanSymbol = String(symbol).trim().toUpperCase();
+    // CRITICAL FIX: The proxy endpoint strictly requires LOWERCASE ticker symbols in the URL path
+    let cleanSymbol = String(symbol).trim().toLowerCase();
     const res = await fetch(`https://freecodecamp.rocks{cleanSymbol}/quote`);
     const data = await res.json();
     if (!data || !data.symbol) return null;
@@ -29,7 +30,6 @@ async function getStock(symbol) {
 }
 
 module.exports = function (app) {
-  // Test route layout to allow the test framework to reset the IP array blocks smoothly
   app.route('/api/clear-test-db').get((req, res) => {
     likesDb = {};
     return res.json({ status: 'cleared' });
@@ -43,13 +43,13 @@ module.exports = function (app) {
     
     const isArrayQuery = Array.isArray(stock);
     const symbols = isArrayQuery ? stock : [stock];
-    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip || '127.0.0.1';
 
     const results = await Promise.all(
       symbols.map(async (s) => {
         const info = await getStock(s);
         if (!info) {
-          return { stock: String(s).toUpperCase(), price: 0, likes: 0 };
+          return { stock: String(s).toUpperCase(), price: 0, likes: countLikes(s) };
         }
         if (doLike) addLike(info.stock, clientIp);
         return { stock: info.stock, price: info.price, likes: countLikes(info.stock) };
