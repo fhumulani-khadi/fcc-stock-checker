@@ -49,12 +49,12 @@ module.exports = function (app) {
       })
     );
 
-    // FIXED: Correctly returns a single raw object for a single stock query
+    // FIX: Extract results[0] out of the array configuration to send a clean raw object format
     if (!isArrayQuery) {
       return res.json({ stockData: results[0] });
     }
 
-    // Correctly returns a structured array containing rel_likes for two stocks query
+    // Maps relative likes cleanly inside the output collection for dual array stock listings
     const [a, b] = results;
     return res.json({
       stockData: [
