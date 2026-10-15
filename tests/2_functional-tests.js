@@ -6,7 +6,7 @@ const server = require('../server');
 chai.use(chaiHttp);
 
 suite('Functional Tests', function() {
-  this.timeout(5000); // Gives external API requests up to 5 seconds
+  this.timeout(5000); 
 
   suite('GET /api/stock-prices/ => stockData object', function() {
     
@@ -17,9 +17,10 @@ suite('Functional Tests', function() {
         .end(function(err, res) {
           assert.equal(res.status, 200);
           assert.property(res.body, 'stockData');
-          assert.equal(res.body.stockData.stock, 'GOOG');
+          assert.property(res.body.stockData, 'stock');
           assert.property(res.body.stockData, 'price');
           assert.property(res.body.stockData, 'likes');
+          assert.equal(res.body.stockData.stock, 'GOOG');
           done();
         });
     });
