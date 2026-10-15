@@ -8,6 +8,15 @@ chai.use(chaiHttp);
 suite('Functional Tests', function() {
   this.timeout(5000); 
 
+  // Reset the temporary likes database before every separate test block execution
+  beforeEach(function(done) {
+    chai.request(server)
+      .get('/api/clear-test-db')
+      .end(function() {
+        done();
+      });
+  });
+
   suite('GET /api/stock-prices/ => stockData object', function() {
     
     test('Viewing one stock: GET request to /api/stock-prices/', function(done) {
@@ -32,7 +41,7 @@ suite('Functional Tests', function() {
         .end(function(err, res) {
           assert.equal(res.status, 200);
           assert.equal(res.body.stockData.stock, 'MSFT');
-          assert.isAtLeast(res.body.stockData.likes, 1);
+          assert.equal(res.body.stockData.likes, 1);
           done();
         });
     });
@@ -40,15 +49,15 @@ suite('Functional Tests', function() {
     test('Viewing the same stock and liking it again: GET request to /api/stock-prices/', function(done) {
       chai.request(server)
         .get('/api/stock-prices/')
-        .query({ stock: 'msft' })
+        .query({ stock: 'aapl', like: true })
         .end(function(err, res1) {
-          const initialLikes = res1.body.stockData.likes;
+          assert.equal(res1.body.stockData.likes, 1);
           chai.request(server)
             .get('/api/stock-prices/')
-            .query({ stock: 'msft', like: true })
+            .query({ stock: 'aapl', like: true })
             .end(function(err, res2) {
               assert.equal(res2.status, 200);
-              assert.equal(res2.body.stockData.likes, initialLikes);
+              assert.equal(res2.body.stockData.likes, 1);
               done();
             });
         });
