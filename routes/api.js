@@ -12,7 +12,7 @@ const hashIp = (ip) => {
 function addLike(symbol, ip) {
   const key = symbol.toUpperCase();
   if (!likesDb[key]) likesDb[key] = new Set();
-  likesDb[key].add(hashIp(ip)); // a Set means one like per IP
+  likesDb[key].add(hashIp(ip));
 }
 
 const countLikes = (symbol) => {
@@ -23,9 +23,8 @@ const countLikes = (symbol) => {
 async function getStock(symbol) {
   try {
     const cleanSymbol = String(symbol).trim().toUpperCase();
-    const res = await fetch(
-      https://stock-price-checker-proxy.freecodecamp.rocks/v1/stock/${cleanSymbol}/quote
-    );
+    const url = 'https://stock-price-checker-proxy.freecodecamp.rocks/v1/stock/' + cleanSymbol + '/quote';
+    const res = await fetch(url);
     const data = await res.json();
     if (!data || !data.symbol) return null;
     return {
@@ -47,7 +46,6 @@ module.exports = function (app) {
     const isArrayQuery = Array.isArray(stock);
     const symbols = isArrayQuery ? stock : [stock];
 
-    // On Render, x-forwarded-for can hold several IPs separated by commas
     const clientIp = (
       req.headers['x-forwarded-for'] ||
       req.socket.remoteAddress ||
@@ -73,12 +71,10 @@ module.exports = function (app) {
       })
     );
 
-    // One stock: { stockData: { stock, price, likes } }
     if (!isArrayQuery) {
       return res.json({ stockData: results[0] });
     }
 
-    // Two stocks: { stockData: [ { stock, price, rel_likes }, ... ] }
     const [a, b] = results;
     return res.json({
       stockData: [
