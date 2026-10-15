@@ -13,26 +13,31 @@ const app = express();
 
 app.set('trust proxy', true);
 
-// 1. Static files must be declared BEFORE the strict Content Security Policy middleware
+// Express direct middleware configuration strictly compliant with freeCodeCamp testing constraints
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://jquery.com"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:"]
+    }
+  },
+  hidePoweredBy: true,
+  xssFilter: true,
+  noSniff: true,
+  ieNoOpen: true
+}));
+
 app.use('/public', express.static(process.cwd() + '/public'));
 app.use(cors({origin: '*'})); 
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Front-end route bypasses helmet CSP checking loops
 app.route('/').get(function (req, res) {
   res.sendFile(process.cwd() + '/views/index.html');
 });
-
-// 2. Strict Content Security Policy injected right before functional testing routes
-app.use(helmet.contentSecurityPolicy({
-  directives: {
-    defaultSrc: ["'self'"],
-    scriptSrc: ["'self'"],
-    styleSrc: ["'self'"]
-  }
-}));
 
 fccTestingRoutes(app);
 apiRoutes(app);  
