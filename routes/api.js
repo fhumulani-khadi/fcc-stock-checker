@@ -24,6 +24,7 @@ async function getStock(symbol) {
   try {
     const cleanSymbol = String(symbol).trim().toUpperCase();
     const res = await fetch(
+      const res = await fetch(
       https://stock-price-checker-proxy.freecodecamp.rocks/v1/stock/${cleanSymbol}/quote
     );
     const data = await res.json();
