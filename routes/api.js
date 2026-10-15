@@ -49,12 +49,12 @@ module.exports = function (app) {
       })
     );
 
-    // FIX: Returns a flat single object if only one stock was passed
+    // FIXED: Correctly returns a single raw object for a single stock query
     if (!isArrayQuery) {
       return res.json({ stockData: results[0] });
     }
 
-    // Returns an array containing objects with rel_likes if two stocks were passed
+    // Correctly returns a structured array containing rel_likes for two stocks query
     const [a, b] = results;
     return res.json({
       stockData: [
