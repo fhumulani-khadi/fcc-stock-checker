@@ -1,6 +1,7 @@
 'use strict';
 const crypto = require('crypto');
 
+// Global persistent simulation maps for tracking data records seamlessly
 const likesDb = {};
 
 const hashIp = (ip) => {
@@ -18,7 +19,7 @@ const countLikes = (symbol) => likesDb[symbol.toUpperCase()]?.size || 0;
 
 async function getStock(symbol) {
   try {
-    let cleanSymbol = String(symbol).trim();
+    let cleanSymbol = String(symbol).trim().toUpperCase();
     const res = await fetch(`https://freecodecamp.rocks{cleanSymbol}/quote`);
     const data = await res.json();
     if (!data || !data.symbol) return null;
@@ -35,7 +36,9 @@ module.exports = function (app) {
     
     if (!stock) return res.json({ error: 'no stock provided' });
     
-    const symbols = Array.isArray(stock) ? stock : [stock];
+    // Core structural array conditional mapping
+    const isArrayQuery = Array.isArray(stock);
+    const symbols = isArrayQuery ? stock : [stock];
 
     const results = await Promise.all(
       symbols.map(async (s) => {
@@ -48,10 +51,12 @@ module.exports = function (app) {
       })
     );
 
-    if (!Array.isArray(stock)) {
+    // If one single stock was queried, return an single object containing stockData
+    if (!isArrayQuery) {
       return res.json({ stockData: results[0] });
     }
 
+    // If multiple stocks were provided, map data points using strict rel_likes arrays
     const [a, b] = results;
     return res.json({
       stockData: [
